@@ -55,9 +55,9 @@ from codex_organic_chem.service import chem_normalize_structure,chem_reaction_an
 for smi in strings[:4]:
     assert chem_normalize_structure(smi).get('canonical_smiles')
 assert chem_reaction_analyze('.'.join(strings[:2])+'>>'+'.'.join(strings[2:4]))['analysis']['mass_charge_balance']['status']=='balanced'
-width=1100;height=520;y=108
+width=1100;height=494;y=108
 parts=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
-'<style>text{font-family:Arial,Helvetica,sans-serif;fill:#111}.head{font-size:18px;font-weight:600}.label{font-size:14px}.small{font-size:12px}.tiny{font-size:11px}.blue{fill:#234B79}.rxnArrow,.arrowHead{stroke:#111;stroke-width:1.6;fill:none}.arrowLabel{font-size:13px}.axis{stroke:#444;stroke-width:1;fill:none}.peak{stroke-width:2;fill:none}</style>',f'<rect width="{width}" height="{height}" fill="white"/>']
+'<style>text{font-family:Arial,Helvetica,sans-serif;fill:#111}.head{font-size:16px;font-weight:600;fill:#294157}.stage{font-size:15px;font-weight:600;fill:#294157}.resultA{font-size:17px;font-weight:600;fill:#3879B0}.resultB{font-size:17px;font-weight:600;fill:#CC823A}.label{font-size:14px}.small{font-size:12px}.tiny{font-size:11px}.blue{fill:#234B79}.rxnArrow,.arrowHead{stroke:#111;stroke-width:1.6;fill:none}.arrowLabel{font-size:13px}.axis{stroke:#444;stroke-width:1;fill:none}.peak{stroke-width:2;fill:none}</style>',f'<rect width="{width}" height="{height}" fill="white"/>']
 els=[]
 def text(x,y,s,cls='label',anchor='middle'):
     parts.append(f'<text x="{x}" y="{y}" class="{cls}" text-anchor="{anchor}">{escape(s)}</text>')
@@ -66,7 +66,13 @@ def place(i,x,anchor,label):
     parts.append(f'<g transform="translate({x},{yy})">{d.svg_body}</g>')
     geo=d.translated_geometry(x,yy)
     els.append(FigureElement(kind='molecule',label=label,box=geo['ink_box'],bond_lengths_px=geo['bond_lengths_px'],label_boxes=geo['label_boxes']))
-def arrow(x1,yy,x2):parts.append(_arrow_svg(x1,yy,x2,'',''))
+def arrow(x1,yy,x2):
+    parts.append(f'<path d="M {x1} {yy} H {x2-7}" stroke="#71818B" stroke-width="1.5" fill="none"/><path d="M {x2-7} {yy-3.5} L {x2} {yy} L {x2-7} {yy+3.5} Z" fill="#71818B"/>')
+def box(x,yy,w,h,label,kind='input'):
+    color={'input':'#C5D2DD','A':'#3879B0','B':'#CC823A'}[kind]
+    fill='#F5F7F9' if kind=='input' else '#FFFFFF'
+    parts.append(f'<rect x="{x}" y="{yy}" width="{w}" height="{h}" fill="{fill}" stroke="{color}" stroke-width="1.2"/>')
+    text(x+w/2,yy+h/2+5,label,'stage' if kind=='input' else 'result'+kind)
 def plus(xx):text(xx,y+6,'+')
 text(26,30,'A','head','start');text(width/2,30,'Girard T derivatization (model reaction)','head')
 rowwidth=a.width+g.width+h.width+w.width+2*44+108
@@ -78,12 +84,12 @@ hx=x;place(2,x,2,'Girard T hydrazone');text(x+h.width/2,181,'Charge-tagged hydra
 idx=items[2][1][10];nx=hx+h.atom_points[idx][0]
 text(nx,54,'Permanent positive charge','small')
 x+=h.width+22;plus(x);x+=22;place(3,x,3,'water')
-text(width/2,209,'Acetone illustrates carbonyl derivatization; the analytical workflow below concerns steroid isomers.','small')
-# Three horizontal stages, no decorative panels. Same qualitative axes within each pair.
-text(170,253,'1  Charge tagging','head');text(170,276,'and enhanced ionization','head')
-text(565,253,'2  MS³ fragmentation','head')
-text(932,253,'3  Isomer-specific','head');text(932,276,'identification','head')
-arrow(354,365,393);arrow(767,365,802)
+text(width/2,204,'Acetone: model carbonyl compound; analytical workflow: steroid isomers.','small')
+# Restrained thin-box styling following the user's reference.
+text(170,247,'Enhanced ionization','stage')
+text(565,247,'MS³ fragmentation','stage')
+text(932,247,'Isomer-specific identification','stage')
+arrow(351,350,401)
 def spectrum(x,baseline,w,h,peaks,color,axes=True,xlabel=True):
     if axes:parts.append(f'<path class="axis" d="M {x} {baseline-h} V {baseline} H {x+w}"/>')
     else:parts.append(f'<path class="axis" d="M {x} {baseline} H {x+w}"/>')
@@ -93,25 +99,23 @@ def spectrum(x,baseline,w,h,peaks,color,axes=True,xlabel=True):
 # Non-experimental example targets shift in m/z upon derivatization.
 pre=[(.16,.08),(.31,.23),(.60,.10),(.84,.07)]
 post=[(.16,.08),(.41,.10),(.69,.85),(.89,.08)]
-spectrum(40,401,120,88,pre,'#8995A0');spectrum(199,401,120,88,post,'#234B79')
-text(100,305,'Before','small');text(259,305,'After','small');arrow(169,355,190)
-text(170,445,'Target mass shifts on derivatization','small')
-text(170,466,'Schematic spectra','small');text(170,483,'(not experimental data)','small')
-# Isomers refer to a conceptual pair sharing formula and charge, not named compounds.
-text(572,283,'Derivatized steroid ion','small')
-text(497,308,'MS²','label');arrow(520,304,557);text(584,308,'MS³','label');arrow(607,304,650)
-text(572,332,'Structure-dependent fragment ions','small')
+spectrum(40,382,120,84,pre,'#8995A0');spectrum(199,382,120,84,post,'#3879B0')
+text(100,284,'Before derivatization','small');text(259,284,'After derivatization','small');arrow(169,343,190)
+text(170,423,'Charge tagging shifts the target mass','tiny')
+text(170,447,'Schematic spectra (not experimental data)','tiny')
+box(441,270,266,35,'Derivatized steroid ion')
+text(510,332,'MS²','small');arrow(535,328,576);text(602,332,'MS³','small')
 patternA=[(.12,.18),(.30,.75),(.56,.29),(.79,.49)]
 patternB=[(.12,.18),(.41,.48),(.64,.78),(.89,.29)]
-text(460,368,'A','small');spectrum(481,388,246,43,patternA,'#234B79',False,False)
-text(460,427,'B','small');spectrum(481,447,246,43,patternB,'#7D3545',False,True)
-text(572,488,'Schematic MS³ fragmentation patterns','small')
-# Reproduce the two concept patterns as matches, without a second precursor mass.
-spectrum(829,366,153,48,patternA,'#234B79',False,False);text(1014,347,'Isomer A','small')
-spectrum(829,431,153,48,patternB,'#7D3545',False,False);text(1014,412,'Isomer B','small')
-text(942,459,'Same formula; same precursor m/z','small')
-text(942,481,'Structure-dependent fragmentation','small')
-text(25,511,'Conceptual workflow • Takeo et al., Anal. Chem. 2019, 91, 8918–8925 • DOI: 10.1021/acs.analchem.9b00619','tiny','start')
+text(436,372,'A','small');spectrum(461,387,265,42,patternA,'#3879B0',False,False)
+text(436,424,'B','small');spectrum(461,439,265,42,patternB,'#CC823A',False,False)
+text(572,459,'Schematic MS³ fragmentation patterns','tiny')
+# Diagnostic pattern to identity: two separate arrows, no mass-based separation.
+arrow(745,368,812);arrow(745,420,812)
+box(835,346,200,43,'Isomer A','A');box(835,398,200,43,'Isomer B','B')
+text(935,296,'Same formula','small');text(935,314,'Same precursor m/z','small')
+text(935,459,'Structure-dependent fragmentation','tiny')
+text(25,477,'Conceptual workflow • Takeo et al., Anal. Chem. 2019 • DOI: 10.1021/acs.analchem.9b00619','tiny','start')
 parts.append('</svg>')
 root=ET.fromstring('\n'.join(parts));meta=ET.SubElement(root,'{http://www.w3.org/2000/svg}metadata')
 meta.text=json.dumps({'mapped_reaction':strings[:4],'element_hydrogen_charge_balance':'balanced; +1 on both sides','model':'acetone only; not actual steroid analyte','isomers':'Conceptual A and B are defined to share molecular formula, derivatization stoichiometry and precursor charge; no particular steroid or fragment assignment','spectra':'Entirely schematic; normalized arbitrary display coordinates, not experimental intensities or m/z; no enhancement factor asserted','reference':{'doi':'10.1021/acs.analchem.9b00619','experimental_fragment_structures':'not obtained; none drawn'},'source_file':'girard_t_isomer_A.py'},ensure_ascii=False)
